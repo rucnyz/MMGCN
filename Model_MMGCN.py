@@ -25,7 +25,7 @@ class GCN(torch.nn.Module):
 
         if self.dim_latent:
             self.preference = nn.init.xavier_normal_(
-                torch.rand((num_user, self.dim_latent), requires_grad = True)).cuda()
+                torch.rand((num_user, self.dim_latent), requires_grad = True))
             self.MLP = nn.Linear(self.dim_feat, self.dim_latent)
             self.conv_embed_1 = BaseModel(self.dim_latent, self.dim_latent, aggr = self.aggr_mode)
             nn.init.xavier_normal_(self.conv_embed_1.weight)
@@ -36,7 +36,7 @@ class GCN(torch.nn.Module):
             nn.init.xavier_normal_(self.g_layer1.weight)
 
         else:
-            self.preference = nn.init.xavier_normal_(torch.rand((num_user, self.dim_feat), requires_grad = True)).cuda()
+            self.preference = nn.init.xavier_normal_(torch.rand((num_user, self.dim_feat), requires_grad = True))
             self.conv_embed_1 = BaseModel(self.dim_feat, self.dim_feat, aggr = self.aggr_mode)
             nn.init.xavier_normal_(self.conv_embed_1.weight)
             self.linear_layer1 = nn.Linear(self.dim_feat, self.dim_id)
@@ -63,7 +63,7 @@ class GCN(torch.nn.Module):
         temp_features = self.MLP(features) if self.dim_latent else features
 
         x = torch.cat((self.preference, temp_features), dim = 0)
-        x = F.normalize(x).cuda()
+        x = F.normalize(x)
 
         h = F.leaky_relu(self.conv_embed_1(x, self.edge_index))  # equation 1
         x_hat = F.leaky_relu(self.linear_layer1(x)) + id_embedding if self.has_id else F.leaky_relu(
@@ -96,39 +96,40 @@ class Net(torch.nn.Module):
         self.aggr_mode = aggr_mode
         self.concate = concate
         self.user_item_dict = user_item_dict
-        self.weight = torch.tensor([[1.0], [-1.0]]).cuda()
+        self.weight = torch.tensor([[1.0], [-1.0]])
         self.reg_weight = reg_weight
-
-        self.edge_index = torch.tensor(edge_index).t().contiguous().cuda()
+        # 连接，变成双向图
+        self.edge_index = torch.tensor(edge_index).t().contiguous()
         self.edge_index = torch.cat((self.edge_index, self.edge_index[[1, 0]]), dim = 1)
         self.num_modal = 0
 
-        self.v_feat = torch.tensor(v_feat, dtype = torch.float).cuda()
+        self.v_feat = v_feat
         self.v_gcn = GCN(self.edge_index, batch_size, num_user, num_item, self.v_feat.size(1), dim_x, self.aggr_mode,
                          self.concate, num_layer = num_layer, has_id = has_id, dim_latent = 256)
 
-        self.a_feat = torch.tensor(a_feat, dtype = torch.float).cuda()
+        self.a_feat = a_feat
         self.a_gcn = GCN(self.edge_index, batch_size, num_user, num_item, self.a_feat.size(1), dim_x, self.aggr_mode,
                          self.concate, num_layer = num_layer, has_id = has_id)
 
-        self.t_feat = torch.tensor(t_feat, dtype = torch.float).cuda()
+        self.t_feat = t_feat
         self.t_gcn = GCN(self.edge_index, batch_size, num_user, num_item, self.t_feat.size(1), dim_x, self.aggr_mode,
                          self.concate, num_layer = num_layer, has_id = has_id)
 
-        # self.words_tensor = torch.tensor(words_tensor, dtype=torch.long).cuda()
-        # self.word_embedding = nn.Embedding(torch.max(self.words_tensor[1])+1, 128)
-        # nn.init.xavier_normal_(self.word_embedding.weight) 
-        # self.t_gcn = GCN(self.edge_index, batch_size, num_user, num_item, 128, dim_x, self.aggr_mode, self.concate, num_layer=num_layer, has_id=has_id)
+        # self.words_tensor = torch.tensor(words_tensor, dtype = torch.long)
+        # self.word_embedding = nn.Embedding(torch.max(self.words_tensor[1]) + 1, 128)
+        # nn.init.xavier_normal_(self.word_embedding.weight)
+        # self.t_gcn = GCN(self.edge_index, batch_size, num_user, num_item, 128, dim_x, self.aggr_mode, self.concate,
+        #                  num_layer = num_layer, has_id = has_id)
 
         self.id_embedding = nn.init.xavier_normal_(
-            torch.rand((num_user + num_item, dim_x), requires_grad = True)).cuda()
-        self.result = nn.init.xavier_normal_(torch.rand((num_user + num_item, dim_x))).cuda()
+            torch.rand((num_user + num_item, dim_x), requires_grad = True))
+        self.result = nn.init.xavier_normal_(torch.rand((num_user + num_item, dim_x)))
 
     def forward(self):
         v_rep = self.v_gcn(self.v_feat, self.id_embedding)
         a_rep = self.a_gcn(self.a_feat, self.id_embedding)
 
-        # # self.t_feat = torch.tensor(scatter_('mean', self.word_embedding(self.words_tensor[1]), self.words_tensor[0])).cuda()
+        # # self.t_feat = torch.tensor(scatter_('mean', self.word_embedding(self.words_tensor[1]), self.words_tensor[0]))
         t_rep = self.t_gcn(self.t_feat, self.id_embedding)
 
         representation = (v_rep + a_rep + t_rep) / 3
@@ -145,7 +146,7 @@ class Net(torch.nn.Module):
         score = torch.sum(user_score * item_score, dim = 1).view(-1, 2)
         loss = -torch.mean(torch.log(torch.sigmoid(torch.matmul(score, self.weight))))
         reg_embedding_loss = (self.id_embedding[user_tensor] ** 2 + self.id_embedding[item_tensor] ** 2).mean() + (
-                    self.v_gcn.preference ** 2).mean()
+                self.v_gcn.preference ** 2).mean()
         reg_loss = self.reg_weight * (reg_embedding_loss)
         return loss + reg_loss, reg_loss, loss, reg_embedding_loss, reg_embedding_loss
 

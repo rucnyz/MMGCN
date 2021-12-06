@@ -64,23 +64,21 @@ if __name__ == '__main__':
     has_weight_loss = True if args.has_weight_loss == 'True' else False
     dim_E = args.dim_E
     writer = None  # SummaryWriter()
-    # with open(data_path+'/result/result{0}_{1}.txt'.format(l_r, weight_decay), 'w') as save_file:
-    #     save_file.write('---------------------------------lr: {0} \t Weight_decay:{1} ---------------------------------\r\n'.format(l_r, weight_decay))
-    ##########################################################################################################################################
-    print('Data loading ...')
 
     num_user, num_item, train_edge, user_item_dict, v_feat, a_feat, t_feat = data_load(data_path)
-    # t_feat是指
-
+    # t_feat(2,12950)，第一行的数值是短视频的序号，第二行是该短视频文本的编码，因为会有多个字所以每个序号对应多个编码，e.g.:
+    # tensor([[   1,    1,    1,    2],
+    #         [8855, 8903, 2726, 8387]])
+    # 猜测vocab_size=11570
     train_dataset = TrainingDataset(num_user, num_item, user_item_dict, train_edge)
     train_dataloader = DataLoader(train_dataset, batch_size, shuffle = True, num_workers = num_workers)
 
-    val_data = np.load('./Data/' + data_path + '/val_full.npy', allow_pickle = True)
-    test_data = np.load('./Data/' + data_path + '/test_full.npy', allow_pickle = True)
+    val_data = np.load('./dataset_sample/' + data_path + '/val_sample.npy', allow_pickle = True)
+    test_data = np.load('./dataset_sample/' + data_path + '/test_sample.npy', allow_pickle = True)
     print('Data has been loaded.')
     ##########################################################################################################################################
     model = Net(v_feat, a_feat, t_feat, None, train_edge, batch_size, num_user, num_item, 'mean', 'False', 2, True,
-                user_item_dict, weight_decay, dim_E).cuda()
+                user_item_dict, weight_decay, dim_E)
     ##########################################################################################################################################
     optimizer = torch.optim.Adam([{'params': model.parameters(), 'lr': learning_rate}])
     ##########################################################################################################################################

@@ -19,11 +19,11 @@ def train(epoch, length, dataloader, model, optimizer, batch_size, writer = None
         optimizer.step()
         pbar.update(batch_size)
         num_pbar += batch_size
-        sum_loss += loss.cpu().item()
-        sum_model_loss += model_loss.cpu().item()
-        sum_reg_loss += reg_loss.cpu().item()
-        sum_ent_loss += entropy_loss.cpu().item()
-        sum_weight_loss += weight_loss.cpu().item()
+        sum_loss += loss.item()
+        sum_model_loss += model_loss.item()
+        sum_reg_loss += reg_loss.item()
+        sum_ent_loss += entropy_loss.item()
+        sum_weight_loss += weight_loss.item()
         step += 1.0
     pbar.close()
     print(

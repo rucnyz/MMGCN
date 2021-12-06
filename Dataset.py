@@ -58,6 +58,8 @@ class TrainingDataset(Dataset):
 
     def __getitem__(self, index):
         user, pos_item = self.edge_index[index]
+        # 抽到的neg_item不在该用户点击的短视频里
+        # 这里正负样本比例1:1
         while True:
             neg_item = random.sample(self.all_set, 1)[0]
             if neg_item not in self.user_item_dict[user]:
