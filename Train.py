@@ -28,8 +28,8 @@ def train(epoch, length, dataloader, model, optimizer, batch_size, writer = None
     pbar.close()
     print(
         '----------------- loss value:{}  model_loss value:{}  reg_loss value:{} entropy_loss value:{} weight_loss value:{}--------------'
-        .format(sum_loss / step, sum_model_loss / step, sum_reg_loss / step, sum_ent_loss / step,
-                sum_weight_loss / step))
+            .format(sum_loss / step, sum_model_loss / step, sum_reg_loss / step, sum_ent_loss / step,
+                    sum_weight_loss / step))
     if writer is not None:
         writer.add_scalar('loss', sum_loss / step, epoch)
         writer.add_scalar('model_loss', sum_model_loss / step, epoch)

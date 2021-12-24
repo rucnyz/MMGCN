@@ -130,10 +130,10 @@ class Net(torch.nn.Module):
         a_rep = self.a_gcn(self.a_feat, self.id_embedding)
 
         # # self.t_feat = torch.tensor(scatter_('mean', self.word_embedding(self.words_tensor[1]), self.words_tensor[0]))
-        t_rep = self.t_gcn(self.t_feat, self.id_embedding)
+        # t_rep = self.t_gcn(self.t_feat, self.id_embedding)
 
-        representation = (v_rep + a_rep + t_rep) / 3
-
+        representation = (v_rep + a_rep) / 2
+        # 存下来方便验证时使用
         self.result = representation
         return representation
 
@@ -147,7 +147,7 @@ class Net(torch.nn.Module):
         loss = -torch.mean(torch.log(torch.sigmoid(torch.matmul(score, self.weight))))
         reg_embedding_loss = (self.id_embedding[user_tensor] ** 2 + self.id_embedding[item_tensor] ** 2).mean() + (
                 self.v_gcn.preference ** 2).mean()
-        reg_loss = self.reg_weight * (reg_embedding_loss)
+        reg_loss = self.reg_weight * reg_embedding_loss
         return loss + reg_loss, reg_loss, loss, reg_embedding_loss, reg_embedding_loss
 
     def accuracy(self, step = 2000, topk = 10):
@@ -204,7 +204,7 @@ class Net(torch.nn.Module):
 
         return precision / length, recall / length, ndcg / length
 
-    def full_accuracy(self, val_data, step = 2000, topk = 10):
+    def full_accuracy(self, val_data, step = 100, topk = 10):
         user_tensor = self.result[:self.num_user]
         item_tensor = self.result[self.num_user:]
 

@@ -93,7 +93,7 @@ if __name__ == '__main__':
             with open('./Data/' + data_path + '/result_{0}.txt'.format(save_file), 'a') as save_file:
                 save_file.write('lr: {0} \t Weight_decay:{1} is Nan\r\n'.format(learning_rate, weight_decay))
             break
-        torch.cuda.empty_cache()
+        # torch.cuda.empty_cache()
 
         val_precision, val_recall, val_ndcg = full_vt(epoch, model, val_data, 'Val', writer)
         test_precision, test_recall, test_ndcg = full_vt(epoch, model, test_data, 'Test', writer)
