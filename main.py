@@ -65,20 +65,39 @@ if __name__ == '__main__':
     dim_E = args.dim_E
     writer = None  # SummaryWriter()
 
-    num_user, num_item, train_edge, user_item_dict, v_feat, a_feat, t_feat = data_load(data_path)
+    num_user, num_item, train_edge, user_item_dict, v_feat, a_feat, t_feat = data_load(data_path, device=device)
     # t_feat(2,12950)，第一行的数值是短视频的序号，第二行是该短视频文本的编码，因为会有多个字所以每个序号对应多个编码，e.g.:
     # tensor([[   1,    1,    1,    2],
     #         [8855, 8903, 2726, 8387]])
     # 猜测vocab_size=11570
+
+    # a_feat(1651, 128) v_feat(1651, 128)
+
+    # train_edge: array([[   0, 1282],
+    #        [   0, 1012],
+    #        [   0,  584],
+    #        ...,
+    #        [  99,  571],
+    #        [  99,   22],
+    #        [  99, 1348]])
+
+    # user_item_dict: 把train_edge变成字典形式，100个用户
+
+    # train_edge = train_edge + [[0, num_user]] * len(train_edge)
+    # for i in range(num_user):
+    #     user_item_dict[i] = list(map(lambda x: x + num_user, user_item_dict[i]))
+
     train_dataset = TrainingDataset(num_user, num_item, user_item_dict, train_edge)
     train_dataloader = DataLoader(train_dataset, batch_size, shuffle = True, num_workers = num_workers)
 
-    val_data = np.load('./dataset_sample/' + data_path + '/val_sample.npy', allow_pickle = True)
-    test_data = np.load('./dataset_sample/' + data_path + '/test_sample.npy', allow_pickle = True)
+    # val_data = np.load('./dataset_sample/' + data_path + '/val_sample.npy', allow_pickle = True)
+    # test_data = np.load('./dataset_sample/' + data_path + '/test_sample.npy', allow_pickle = True)
+    val_data = np.load('/root/autodl-nas/Tiktok/Training_dataset/Track2/user_item_dict_val.npy', allow_pickle=True)
+    test_data = np.load('/root/autodl-nas/Tiktok/Training_dataset/Track2/user_item_dict_test.npy', allow_pickle=True)
     print('Data has been loaded.')
     ##########################################################################################################################################
     model = Net(v_feat, a_feat, t_feat, None, train_edge, batch_size, num_user, num_item, 'mean', 'False', 2, True,
-                user_item_dict, weight_decay, dim_E)
+                user_item_dict, weight_decay, dim_E, device).to(device)
     ##########################################################################################################################################
     optimizer = torch.optim.Adam([{'params': model.parameters(), 'lr': learning_rate}])
     ##########################################################################################################################################
@@ -88,9 +107,9 @@ if __name__ == '__main__':
     val_max_recall = 0.0
     num_decreases = 0
     for epoch in range(num_epoch):
-        loss = train(epoch, len(train_dataset), train_dataloader, model, optimizer, batch_size, writer)
+        loss = train(epoch, len(train_dataset), train_dataloader, model, optimizer, batch_size, device, writer)
         if torch.isnan(loss):
-            with open('./Data/' + data_path + '/result_{0}.txt'.format(save_file), 'a') as save_file:
+            with open('./dataset_sample/' + data_path + '/result_{0}.txt'.format(save_file), 'a') as save_file:
                 save_file.write('lr: {0} \t Weight_decay:{1} is Nan\r\n'.format(learning_rate, weight_decay))
             break
         # torch.cuda.empty_cache()
@@ -106,7 +125,7 @@ if __name__ == '__main__':
             num_decreases = 0
         else:
             if num_decreases > 20:
-                with open('./Data/' + data_path + '/result_{0}.txt'.format(save_file), 'a') as save_file:
+                with open('./dataset_sample/' + data_path + '/result_{0}.txt'.format(save_file), 'a') as save_file:
                     save_file.write('lr: {0} \t Weight_decay:{1} =====> Precision:{2} \t Recall:{3} \t NDCG:{4}\r\n'.
                                     format(learning_rate, weight_decay, max_precision, max_recall, max_NDCG))
                 break

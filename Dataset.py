@@ -5,10 +5,11 @@ import torch
 from torch.utils.data import Dataset
 
 
-def data_load(dataset, has_v = True, has_a = True, has_t = True):
-    dir_str = './dataset_sample/' + dataset
-    train_edge = np.load(dir_str + '/train_sample.npy', allow_pickle = True)
-    user_item_dict = np.load(dir_str + '/user_item_dict_sample.npy', allow_pickle = True).item()
+def data_load(dataset, device, has_v = True, has_a = True, has_t = True):
+    # dir_str = '/root/autodl-tmp/code/mmgcn/dataset_sample/' + dataset
+    dir_str = '/root/autodl-nas/Tiktok/Training_dataset/Track2'
+    train_edge = np.load(dir_str + '/train.npy', allow_pickle = True)
+    user_item_dict = np.load(dir_str + '/user_item_dict_train.npy', allow_pickle = True).item()
 
     if dataset == 'movielens':
         num_user = 55485
@@ -22,19 +23,21 @@ def data_load(dataset, has_v = True, has_a = True, has_t = True):
     elif dataset == 'tiktok':
         # num_user = 36656
         # num_item = 76085
-        num_user = 100
-        num_item = 1651
+        # num_user = 100
+        # num_item = 1651
+        num_user = 70711
+        num_item = 3013743
         if has_v:
-            v_feat = torch.load(dir_str + '/v_feat_sample.pt').float()
+            v_feat = torch.load(dir_str + '/v_feat.pt').float().to(device)
         else:
             v_feat = None
 
         if has_a:
-            a_feat = torch.load(dir_str + '/a_feat_sample.pt').float()
+            a_feat = torch.load(dir_str + '/a_feat.pt').float().to(device)
         else:
             a_feat = None
 
-        t_feat = torch.load(dir_str + '/t_feat_sample.pt') if has_t else None
+        t_feat = torch.load(dir_str + '/t_feat.pt') if has_t else None
     elif dataset == 'Kwai':
         num_user = 7010
         num_item = 86483

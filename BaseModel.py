@@ -7,6 +7,7 @@ from torch_geometric.nn.inits import uniform
 class BaseModel(MessagePassing):
     def __init__(self, in_channels, out_channels, normalize = True, bias = True, aggr = 'add', **kwargs):
         super(BaseModel, self).__init__(aggr = aggr, **kwargs)
+        # 可以通过aggr变量控制特征的融合方式，通过flow变量来控制信息的流动方向，包括“source_to_target”和“target_to_source”
         self.aggr = aggr
         self.in_channels = in_channels
         self.out_channels = out_channels

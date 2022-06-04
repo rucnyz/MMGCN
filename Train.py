@@ -1,7 +1,7 @@
 from tqdm import tqdm
 
 
-def train(epoch, length, dataloader, model, optimizer, batch_size, writer = None):
+def train(epoch, length, dataloader, model, optimizer, batch_size, device, writer = None):
     model.train()
     print('Now, training start ...')
     sum_loss = 0.0
@@ -13,6 +13,8 @@ def train(epoch, length, dataloader, model, optimizer, batch_size, writer = None
     pbar = tqdm(total = length)
     num_pbar = 0
     for user_tensor, item_tensor in dataloader:
+        user_tensor.to(device)
+        item_tensor.to(device)
         optimizer.zero_grad()
         loss, model_loss, reg_loss, weight_loss, entropy_loss = model.loss(user_tensor, item_tensor)
         loss.backward(retain_graph = True)
